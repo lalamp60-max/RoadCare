@@ -1,0 +1,290 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{float}
+
+\definecolor{roadblue}{HTML}{176B87}
+\definecolor{codebg}{HTML}{F3F6F8}
+\hypersetup{colorlinks=true,linkcolor=roadblue,urlcolor=roadblue,citecolor=roadblue}
+\setlist[itemize]{leftmargin=1.5em,itemsep=3pt,topsep=4pt}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=3pt,topsep=4pt}
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true
+}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{RoadCare Project Report}
+\fancyhead[R]{Flutter Application}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{15pt}
+\titleformat{\chapter}{\normalfont\huge\bfseries\color{roadblue}}{\thechapter}{14pt}{}
+
+\newcommand{\outputslot}[2]{%
+  \begin{figure}[H]
+    \centering
+    \IfFileExists{#1}{%
+      \includegraphics[width=0.96\textwidth,height=0.62\textheight,keepaspectratio]{#1}%
+    }{%
+      \fbox{\begin{minipage}[c][55mm][c]{0.90\textwidth}
+        \centering\large\textbf{#2}\\[8pt]
+        \normalsize Add the captured screenshot file named \\texttt{#1} to the Overleaf project.\\
+        This placeholder keeps the report compilable until the real output is uploaded.
+      \end{minipage}}%
+    }
+    \caption{#2}
+  \end{figure}
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{22mm}
+  {\Large PROJECT REPORT\par}
+  \vspace{16mm}
+  {\Huge\bfseries\color{roadblue} RoadCare\par}
+  \vspace{5mm}
+  {\Large Road Damage Reporting and Tracking Application\par}
+  \vspace{18mm}
+  {\large Submitted in partial fulfillment of the requirements for the project\par}
+  \vfill
+  \begin{tabular}{rl}
+    \textbf{Submitted by:} & [Student Name] \\
+    \textbf{Roll / ID:} & [Roll Number] \\
+    \textbf{Department:} & [Department Name] \\
+    \textbf{Institution:} & [College / University] \\
+    \textbf{Guide:} & [Guide Name] \\
+    \textbf{Academic year:} & [Academic Year]
+  \end{tabular}
+  \vfill
+  {\large [Month Year]\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\chapter*{Abstract}
+RoadCare is a cross-platform Flutter application for recording road damage and following its resolution. A user can create an account, sign in, submit a report with a damage category and severity, attach photo evidence, and provide address or location coordinates when available. Users can review and filter their own reports, inspect report details and status history, view map-related report information, receive in-app notifications, and submit feedback. An administrative area supports report review, status management, archived reports, and feedback review.
+
+The application uses Dart and Flutter for its user interface, SQLite through the \texttt{sqflite} family for structured local persistence, and SharedPreferences for settings and session state. The startup code selects the FFI-backed SQLite web factory when running in a browser while preserving the normal SQLite setup on mobile. The web build completes, but the browser capture made during report preparation showed a blank viewport, so successful visual rendering is not claimed. This report describes the implemented modules and data model and provides output slots for verified Chrome and Android screenshots. Android execution must be verified on a connected device or emulator before claiming a successful Android run.
+
+\noindent\textbf{Keywords:} Flutter, Dart, road safety, damage report, SQLite, Android, Chrome
+
+\tableofcontents
+\listoftables
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+\section{Background}
+Road surface damage such as potholes, cracks, damaged edges, and water logging can create safety risks and inconvenience. RoadCare provides a structured way for a community member to submit a report with descriptive and visual evidence, while an administrator can review reports and maintain their progress status.
+
+\section{Problem Statement}
+Road damage observations may otherwise be shared informally and lack consistent information, location, evidence, and follow-up. The project addresses this by collecting report details in a single application and presenting status and history information to users and administrators.
+
+\section{Objectives}
+\begin{itemize}
+  \item Provide account registration and login for report contributors.
+  \item Capture the type, severity, description, location, and optional photo for a road issue.
+  \item Persist reports and related records in a relational SQLite database.
+  \item Let users search and filter their reports and inspect their progress.
+  \item Provide administrative tools to review active and archived reports and user feedback.
+  \item Support both Android and browser builds from a shared Flutter codebase.
+\end{itemize}
+
+\section{Scope}
+The inspected implementation is a client-side application with local database persistence. It includes user and administrator flows, report management, feedback, notifications, settings, and map-related screens. No remote API or cloud synchronization layer is present in the inspected project modules; therefore, records should be treated as local to the running app installation/browser profile unless synchronization is added separately.
+
+\chapter{Requirements and Users}
+\section{User Roles}
+\begin{description}[style=nextline,leftmargin=0pt]
+  \item[Community user] Registers or signs in, creates road-damage reports, views own reports and status, uses report-related map and notification screens, manages profile/settings, and sends feedback.
+  \item[Administrator] Signs in through the separate admin entry, reviews report data, searches/filters/sorts dashboard records, updates report handling, reviews archived reports, and inspects feedback.
+\end{description}
+
+\section{Functional Requirements}
+\begin{longtable}{p{0.13\textwidth}p{0.79\textwidth}}
+\toprule
+\textbf{ID} & \textbf{Requirement} \\
+\midrule
+FR-01 & Register and authenticate a user account. \\
+FR-02 & Create a report with title, description, damage type, severity, optional address, coordinates, and photo evidence. \\
+FR-03 & Save a report and its image reference as related database records. \\
+FR-04 & Show the signed-in user's reports and support text search and status filtering. \\
+FR-05 & Display report details and status history. \\
+FR-06 & Provide map, notification, profile, settings, and feedback screens. \\
+FR-07 & Provide an administrative dashboard for active reports, archived reports, and feedback. \\
+FR-08 & Support light and dark themes and persist application settings. \\
+\bottomrule
+\end{longtable}
+
+\section{Non-Functional Requirements}
+The interface is implemented with Flutter and Material 3 widgets. Database access is organized through a singleton helper and repositories. Relational foreign keys and indexes are created for commonly queried user, report, history, notification, and feedback relationships. Device permissions, browser storage behavior, and map/network availability should be verified on the deployment targets.
+
+\chapter{Technology and Architecture}
+\section{Technology Stack}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{p{0.24\textwidth}X}
+\toprule
+\textbf{Technology} & \textbf{Purpose in RoadCare} \\
+\midrule
+Flutter / Dart & Shared UI and application logic for mobile and web. \\
+Material 3 & Application theme and Flutter UI components. \\
+SQLite / sqflite & Local relational storage for users, reports, evidence references, status history, notifications, and feedback. \\
+\texttt{sqflite\_common\_ffi\_web} & Web database factory selected when \texttt{kIsWeb} is true. \\
+SharedPreferences & Persisted settings, login session values, and recoverable report-form draft values. \\
+\texttt{image\_picker} & Select or capture report photo evidence where supported by the platform. \\
+\texttt{geolocator} & Access device location for report coordinates, subject to permission and device availability. \\
+\texttt{flutter\_map}, \texttt{latlong2} & Map presentation and coordinate support. \\
+\texttt{crypto} & SHA-256-compatible password comparison in the authentication service. \\
+\bottomrule
+\end{tabularx}
+\caption{Primary dependencies and responsibilities, based on the project configuration.}
+\end{table}
+
+\section{Application Layers}
+\begin{enumerate}
+  \item \textbf{Presentation:} Screens under \texttt{lib/screens/} provide authentication, home, reporting, details, map, notifications, profile, settings, feedback, and administration UI. Reusable photo layout components are under \texttt{lib/widgets/}.
+  \item \textbf{Domain and data transfer:} Models under \texttt{lib/models/} represent users, road reports, report images, status history, notifications, and feedback.
+  \item \textbf{Repositories:} Repository classes coordinate report and user operations between screens and the database helper.
+  \item \textbf{Services:} Authentication, session management, and application settings are handled under \texttt{lib/services/}.
+  \item \textbf{Persistence:} \texttt{DatabaseHelper} owns database creation, migration, and SQL operations. On web, \texttt{main.dart} assigns \texttt{databaseFactoryFfiWeb} before the app starts.
+\end{enumerate}
+
+\section{Typical User Flow}
+\begin{lstlisting}
+Launch -> Splash -> Register / Login
+Login -> Home -> New Report -> Add details, location, photo -> Submit
+Home -> Search/filter reports -> Open details -> Follow status/history
+Home -> Map / Notifications / Profile / Settings / Feedback
+\end{lstlisting}
+
+\section{Typical Administrator Flow}
+\begin{lstlisting}
+Launch -> Admin Login -> Dashboard
+Dashboard -> Search/filter/sort reports -> Review details
+Review -> Update handling/status -> Archive when appropriate
+Dashboard -> Review feedback and archived reports
+\end{lstlisting}
+
+\chapter{Functional Modules}
+\section{Authentication and Session}
+The login screen validates the form and delegates authentication to \texttt{AuthService}. Successful login stores user ID, display name, email, and logged-in state using SharedPreferences and opens the home screen. A distinct admin login entry is provided. Registration and user records are backed by the local database. The authentication service accepts either a matching plain-text legacy value or a SHA-256 digest; this compatibility behavior is not a substitute for a modern salted password-hashing scheme and should be reviewed before production use.
+
+\section{Road-Damage Report}
+The report form captures a title and description and offers the categories Pothole, Crack, Damaged Road, Water Logging, Broken Road Edge, and Other. Severity values are Low, Medium, High, and Critical. Coordinates and address are optional report fields. The form uses image picking for evidence, attempts draft recovery around camera use, and submits through \texttt{ReportRepository}. Creating a report and its evidence reference is performed in a database transaction.
+
+\section{Home, Search, and Details}
+The home screen loads reports belonging to the current user. Its in-memory filter supports status selection and case-insensitive search across title, description, damage type, severity, status, and address. Report details and a status-history model support progress visibility.
+
+\section{Map and Notifications}
+Dedicated map and notification screens are included. The map stack is based on \texttt{flutter\_map} and \texttt{latlong2}; map tiles or location behavior may require network access and platform permissions. Notifications are represented as local database records and are displayed in the notification screen; no external push-notification service is configured in the inspected dependencies.
+
+\section{Administration, Archive, and Feedback}
+The administrator dashboard loads active reports, archived reports, and feedback. It includes status/severity counts, resolution-rate and average-rating calculations, and search, filter, and sorting state. Feedback records can be linked to users and optionally to reports. Archived reports are retained separately through an archive flag rather than being removed from the report table.
+
+\section{Themes and Settings}
+The app defines light and dark Material 3 themes. A settings service loads persisted preferences and notifies the root application when the theme selection changes.
+
+\chapter{Database Design}
+The database file is named \texttt{roadcare.db} and the current schema version is 3. Foreign-key enforcement is enabled when the database is configured. The principal tables are summarized below.
+
+\begin{longtable}{p{0.19\textwidth}p{0.73\textwidth}}
+\toprule
+\textbf{Table} & \textbf{Important fields and relationship} \\
+\midrule
+\texttt{users} & \texttt{id} primary key, username, unique email, password value, creation time. \\
+\texttt{reports} & \texttt{id} primary key, \texttt{user\_id} foreign key, title, description, damage type, severity, latitude, longitude, address, image path, status, timestamps, archive flag. User deletion cascades to reports. \\
+\texttt{report\_images} & \texttt{id} primary key, \texttt{report\_id} foreign key, image path, evidence type, creation time. Report deletion cascades to image records. \\
+\texttt{status\_history} & \texttt{id} primary key, \texttt{report\_id} foreign key, old/new status, remarks, changed time. Report deletion cascades to history. \\
+\texttt{notifications} & \texttt{id} primary key, \texttt{user\_id} foreign key, title, message, type, creation time, read flag. User deletion cascades to notifications. \\
+\texttt{feedback} & \texttt{id} primary key, \texttt{user\_id} foreign key, optional \texttt{report\_id}, rating, comment, creation time. User deletion cascades; report deletion sets the report reference to null. \\
+\bottomrule
+\end{longtable}
+
+Indexes are created for report ownership, archive state, status history by report, notifications by user/read state, and feedback by report/user. Schema upgrade logic is maintained in \texttt{DatabaseHelper} and the current declared database version is 3.
+
+\chapter{Platform Implementation}
+\section{Chrome / Web}
+At startup, Flutter bindings are initialized. When \texttt{kIsWeb} is true, the app sets the global sqflite database factory to \texttt{databaseFactoryFfiWeb}; settings are then loaded before \texttt{runApp}. This branch is intended to allow SQLite-backed features to initialize in a browser. The project web build completed, but the inspected browser page showed a blank viewport; the runtime cause is not established in this report. Web storage is browser-profile scoped and should not be assumed to synchronize with Android or another browser.
+
+\section{Android}
+The same Flutter screens and domain logic target Android, while the normal SQLite platform implementation is preserved. Photo picker and geolocation workflows depend on Android runtime permissions, hardware/services, and emulator/device configuration. No Android device or emulator was detected during preparation of this report, so an Android run and screenshot are not claimed as verified. Connect an Android device or configure an AVD, then capture the running app before submitting this report.
+
+\section{Build and Run Commands}
+Run these commands from the project root:
+\begin{lstlisting}
+flutter pub get
+flutter run -d chrome
+flutter run -d <android-device-id>
+flutter test
+flutter analyze
+\end{lstlisting}
+For a browser release build, use \texttt{flutter build web}. For Android, use \texttt{flutter build apk} or \texttt{flutter build appbundle} as required by the submission target.
+
+\chapter{Verification and Outputs}
+\section{Verification Record}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{p{0.22\textwidth}p{0.30\textwidth}X}
+\toprule
+\textbf{Target / check} & \textbf{Result in this environment} & \textbf{Evidence / next action} \\
+\midrule
+Chrome web build & Build passed; visual output unresolved & \texttt{flutter build web} completed, and Flutter reported startup in Chrome, but the browser screenshot showed a blank viewport. Diagnose the runtime/rendering issue before adding a successful-output screenshot. \\
+Android run & Not verified & No Android device or configured emulator was returned by \texttt{flutter devices} / \texttt{flutter emulators}. Connect/configure one and capture the app. \\
+Widget test & Passed (1 test) & The existing RoadCare app-load widget test passed with \texttt{flutter test}. \\
+\bottomrule
+\end{tabularx}
+\caption{Observed verification status while preparing this report.}
+\end{table}
+
+\section{Chrome Output}
+Upload a genuine screenshot from the running Chrome application to Overleaf using the filename \texttt{chrome\_output.png}. The slot below will display it automatically; otherwise the report shows a placeholder.
+\outputslot{chrome_output.png}{RoadCare running in Chrome}
+
+\section{Android Output}
+After running on a connected Android device or emulator, upload a genuine screenshot using the filename \texttt{android\_output.png}. The slot below will display it automatically; otherwise it shows the current verification limitation.
+\outputslot{android_output.png}{RoadCare running on Android}
+
+\section{Suggested Acceptance Checks}
+\begin{enumerate}
+  \item Register a new user and verify that a valid login opens the user home screen.
+  \item Submit one report with a category, severity, description, and a photo; verify it appears in the user's report list.
+  \item If permissions and services are available, attach location coordinates and verify the map-related view.
+  \item Search for a report and filter by status; open its details and verify its current status/history.
+  \item Sign in through the admin flow, review active and archived reports, and inspect feedback.
+  \item Restart the app and verify that expected settings/session behavior is consistent with the current implementation.
+  \item Repeat core flows on Chrome and Android, noting platform-specific permission or storage differences.
+\end{enumerate}
+
+\chapter{Limitations and Future Enhancements}
+\begin{itemize}
+  \item Add an authenticated backend and synchronization so reports can be shared across devices and administrators.
+  \item Replace legacy/plain-text-compatible password handling with a server-side salted password-hashing and account-recovery design.
+  \item Add automated tests for database migrations, repositories, authentication, report submission, and platform-specific behavior.
+  \item Verify camera, gallery, location, and map behavior on physical Android hardware and supported browsers.
+  \item Add role-based access control and audit logging for administrative actions if the app is deployed beyond a demonstration.
+  \item Define backup, privacy, retention, and consent policies for location and photo evidence.
+\end{itemize}
+
+\chapter{Conclusion}
+RoadCare demonstrates a Flutter-based workflow for reporting and tracking road damage with local persistence, image and location support, user-facing report management, and an administrative dashboard. Its explicit web database initialization allows the SQLite-backed application to launch in Chrome as well as target mobile platforms. Before a final academic or production submission, replace the cover-page fields, upload real Chrome and Android screenshots, and run the project tests on the intended devices. Android output remains unverified until a device or emulator is connected.
+
+\end{document}
