@@ -150,7 +150,7 @@ Install the following tools:
 ### Clone the Repository
 
 ```bash
-git clone YOUR_GITHUB_REPOSITORY_URL
+git clone https://github.com/lalamp60-max/RoadCare.git
 ```
 
 ### Navigate to the Project Folder
