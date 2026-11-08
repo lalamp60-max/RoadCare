@@ -12,8 +12,6 @@ RoadCare provides a simple and user-friendly platform for reporting road problem
 
 > The complete project report is included in this repository. Click the link above to open the PDF documentation directly on GitHub.
 
-*Note: If your PDF has a different filename or is inside another folder, update the link with its exact relative path.*
-
 ---
 
 ## ✨ Features
